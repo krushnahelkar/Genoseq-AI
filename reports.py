@@ -64,12 +64,20 @@ def result_as_pdf(result, charts):
                     lines.append(
                         f"{record['id']}: protein, {record['protein_length']} aa; "
                         f"molecular weight {record['molecular_weight']:.2f} Da; "
-                        f"theoretical pI {record['isoelectric_point']:.2f}"
+                        f"theoretical pI {record['isoelectric_point']:.2f}; "
+                        f"GRAVY {record['gravy']:.3f}; "
+                        f"acidic/basic/hydrophobic {record['acidic_percent']:.2f}%/"
+                        f"{record['basic_percent']:.2f}%/{record['hydrophobic_percent']:.2f}%"
                     )
                 else:
+                    stats = record["stats"]
+                    tm = record.get("melting_temperature_c")
                     lines.append(
-                        f"{record['id']}: {record['stats']['Length']} bp; "
-                        f"GC {record['stats']['GC_percent']:.2f}%; ORFs {record['orf_count']}"
+                        f"{record['id']}: {stats['Length']} bp; "
+                        f"A/G/T/C/N {stats['A_count']}/{stats['G_count']}/{stats['T_count']}/"
+                        f"{stats['C_count']}/{stats['N_count']}; GC {stats['GC_percent']:.2f}%; "
+                        f"ORFs (six frames) {record['orf_count']}; "
+                        f"estimated Tm {f'{tm:.2f} C' if tm is not None else 'not estimated'}"
                     )
         elif result["kind"] == "fastq":
             lines.extend((f"Reads: {result['total_reads']}", f"Bases: {result['total_bases']}",

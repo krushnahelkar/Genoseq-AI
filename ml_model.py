@@ -18,6 +18,10 @@ def extract_features(result):
                     "protein_length": record["protein_length"],
                     "molecular_weight": record["molecular_weight"],
                     "isoelectric_point": record["isoelectric_point"],
+                    "gravy": record["gravy"],
+                    "acidic_percent": record["acidic_percent"],
+                    "basic_percent": record["basic_percent"],
+                    "hydrophobic_percent": record["hydrophobic_percent"],
                     **{
                         f"aa_{amino_acid.lower()}_percent": percent
                         for amino_acid, percent in record["amino_acid_composition"].items()
@@ -38,6 +42,7 @@ def extract_features(result):
                 "gc_skew": record["gc_skew"],
                 "at_skew": record["at_skew"],
                 "orf_count": record["orf_count"],
+                "tm_estimate_c": record["melting_temperature_c"],
                 "valid_dna": int(record["valid"]),
             })
         return rows

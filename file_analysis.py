@@ -6,7 +6,7 @@ from pathlib import Path
 from Bio import SeqIO
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
-from fasta_reader import analyze_sequence
+from fasta_reader import analyze_sequence, protein_analysis
 
 
 FASTA_EXTENSIONS = {".fa", ".fasta", ".fna", ".fas", ".faa"}
@@ -52,6 +52,16 @@ def analyze_fasta(text):
     results = []
     nucleotide_alphabet = set("ACGTUNRYSWKMBDHV")
     protein_alphabet = set("ACDEFGHIKLMNPQRSTVWY")
+    amino_acid_names = {
+        "A": "Alanine", "C": "Cysteine", "D": "Aspartic acid", "E": "Glutamic acid",
+        "F": "Phenylalanine", "G": "Glycine", "H": "Histidine", "I": "Isoleucine",
+        "K": "Lysine", "L": "Leucine", "M": "Methionine", "N": "Asparagine",
+        "P": "Proline", "Q": "Glutamine", "R": "Arginine", "S": "Serine",
+        "T": "Threonine", "V": "Valine", "W": "Tryptophan", "Y": "Tyrosine",
+    }
+    acidic_residues = set("DE")
+    basic_residues = set("KRH")
+    hydrophobic_residues = set("ACFILMVWY")
     for record in records:
         sequence = str(record.seq).upper()
         base = {
@@ -70,6 +80,9 @@ def analyze_fasta(text):
                 "invalid_bases": analysis["Validation"]["Invalid_Bases"],
                 "orf_count": analysis["ORF_Count"],
                 "orfs": analysis["ORFs"],
+                "translation_frames": analysis["Six_Frame_Translation"],
+                "translation_truncated": analysis["Translation_Truncated"],
+                "melting_temperature_c": analysis["Melting_Temperature_C"],
             })
             continue
 
@@ -85,13 +98,43 @@ def analyze_fasta(text):
             )
         protein = ProteinAnalysis(protein_sequence)
         composition = protein.count_amino_acids()
+        protein_properties = protein_analysis(protein_sequence)
+        composition_detail = []
+        for aa in sorted(amino_acid_names):
+            if aa in acidic_residues:
+                group = "acidic"
+            elif aa in basic_residues:
+                group = "basic"
+            elif aa in hydrophobic_residues:
+                group = "hydrophobic"
+            else:
+                group = "polar"
+            count = composition.get(aa, 0)
+            composition_detail.append({
+                "code": aa,
+                "name": amino_acid_names[aa],
+                "count": count,
+                "percent": round(count / len(protein_sequence) * 100, 2),
+                "group": group,
+            })
+        acidic_detail = [item for item in composition_detail if item["group"] == "acidic"]
+        basic_detail = [item for item in composition_detail if item["group"] == "basic"]
+        hydrophobic_detail = [item for item in composition_detail if item["group"] == "hydrophobic"]
         results.append({
             **base,
             "record_type": "Protein",
             "valid": True,
             "protein_length": len(protein_sequence),
-            "molecular_weight": protein.molecular_weight(),
-            "isoelectric_point": protein.isoelectric_point(),
+            "molecular_weight": protein_properties["Molecular_Weight"],
+            "isoelectric_point": protein_properties["Isoelectric_Point"],
+            "gravy": protein_properties["GRAVY"],
+            "acidic_percent": protein_properties["Acidic_Percent"],
+            "basic_percent": protein_properties["Basic_Percent"],
+            "hydrophobic_percent": protein_properties["Hydrophobic_Percent"],
+            "acidic_residues": acidic_detail,
+            "basic_residues": basic_detail,
+            "hydrophobic_residues": hydrophobic_detail,
+            "amino_acid_detail": composition_detail,
             "amino_acid_composition": {
                 aa: round(count / len(protein_sequence) * 100, 2)
                 for aa, count in sorted(composition.items())

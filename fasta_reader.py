@@ -4,12 +4,14 @@ from pathlib import Path
 
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqUtils import MeltingTemp
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 
 
 # The FASTA file is expected at: <project folder>\data\test.fasta
 FASTA_FILE = Path(__file__).resolve().parent / "data" / "test.fasta"
 MIN_ORF_LENGTH = 90
+MAX_TRANSLATION_NT = 30000
 
 
 def clean_sequence(sequence):
@@ -18,7 +20,8 @@ def clean_sequence(sequence):
 
 
 def sequence_statistics(sequence):
-    sequence = clean_sequence(sequence)
+    # Treat RNA uracil as thymine for the requested A/T/G/C/N summary.
+    sequence = clean_sequence(sequence).replace("U", "T")
     counts = Counter(sequence)
     length = len(sequence)
 
@@ -79,7 +82,7 @@ def nucleotide_classification(sequence):
 
 
 def validate_sequence(sequence):
-    sequence = clean_sequence(sequence)
+    sequence = clean_sequence(sequence).replace("U", "T")
     valid_bases = set("ATGCN")
     invalid_bases = sorted(set(sequence) - valid_bases)
 
@@ -90,12 +93,12 @@ def validate_sequence(sequence):
 
 
 def reverse_complement(sequence):
-    sequence = clean_sequence(sequence)
+    sequence = clean_sequence(sequence).replace("U", "T")
     return str(Seq(sequence).reverse_complement())
 
 
 def translate_sequence(sequence, frame=0):
-    sequence = clean_sequence(sequence)
+    sequence = clean_sequence(sequence).replace("U", "T")
     # FASTA files can contain protein sequences or other non-DNA letters.
     # Keep their validation results, but don't pass invalid codons to the
     # nucleotide translator, which raises TranslationError.
@@ -111,9 +114,11 @@ def translate_sequence(sequence, frame=0):
     return str(Seq(sequence).translate(to_stop=False))
 
 
-def six_frame_translation(sequence):
+def six_frame_translation(sequence, max_bases=MAX_TRANSLATION_NT):
     sequence = clean_sequence(sequence)
     reverse_sequence = reverse_complement(sequence)
+    sequence = sequence[:max_bases]
+    reverse_sequence = reverse_sequence[:max_bases]
 
     return {
         "+1": translate_sequence(sequence, 0),
@@ -126,8 +131,8 @@ def six_frame_translation(sequence):
 
 
 def find_orfs(sequence, min_length=MIN_ORF_LENGTH):
-    """Find ATG-to-stop ORFs on both strands in all three reading frames."""
-    sequence = clean_sequence(sequence)
+    """Find complete ATG-to-stop ORFs in all six frames (1-based coordinates)."""
+    sequence = clean_sequence(sequence).replace("U", "T")
     orfs = []
     original_length = len(sequence)
     strands = {
@@ -138,51 +143,43 @@ def find_orfs(sequence, min_length=MIN_ORF_LENGTH):
 
     for strand, dna in strands.items():
         for frame in range(3):
-            position = frame
-
-            while position <= len(dna) - 3:
+            starts = []
+            for position in range(frame, len(dna) - 2, 3):
                 codon = dna[position:position + 3]
-
-                if codon != "ATG":
-                    position += 3
-                    continue
-
-                start = position
-                search_position = start + 3
-                found_stop = False
-
-                while search_position <= len(dna) - 3:
-                    stop_codon = dna[search_position:search_position + 3]
-
-                    if stop_codon in stop_codons:
-                        end = search_position + 3
+                if codon == "ATG":
+                    starts.append(position)
+                elif codon in stop_codons and starts:
+                    end = position + 3
+                    for start in starts:
                         orf_length = end - start
-
-                        if orf_length >= min_length:
-                            if strand == "+":
-                                genomic_start = start + 1
-                                genomic_end = end
-                            else:
-                                genomic_start = original_length - end + 1
-                                genomic_end = original_length - start
-
-                            orfs.append({
-                                "Strand": strand,
-                                "Frame": f"{strand}{frame + 1}",
-                                "Start": genomic_start,
-                                "End": genomic_end,
-                                "Length": orf_length,
-                                "Sequence": dna[start:end],
-                            })
-
-                        position = end
-                        found_stop = True
-                        break
-
-                    search_position += 3
-
-                if not found_stop:
-                    position += 3
+                        if orf_length < min_length:
+                            continue
+                        if strand == "+":
+                            genomic_start, genomic_end = start + 1, end
+                        else:
+                            genomic_start = original_length - end + 1
+                            genomic_end = original_length - start
+                        coding_dna = dna[start:end]
+                        peptide = str(Seq(coding_dna).translate(to_stop=True))
+                        peptide_properties = (
+                            protein_analysis(peptide)
+                            if peptide and set(peptide) <= set("ACDEFGHIKLMNPQRSTVWY")
+                            else None
+                        )
+                        orfs.append({
+                            "Strand": strand,
+                            "Frame": f"{strand}{frame + 1}",
+                            "Start": genomic_start,
+                            "End": genomic_end,
+                            "Length": orf_length,
+                            "Sequence": coding_dna,
+                            "Protein": peptide,
+                            "Protein_Length": len(peptide),
+                            "Molecular_Weight": peptide_properties["Molecular_Weight"] if peptide_properties else None,
+                            "Isoelectric_Point": peptide_properties["Isoelectric_Point"] if peptide_properties else None,
+                            "GRAVY": peptide_properties["GRAVY"] if peptide_properties else None,
+                        })
+                    starts = []
 
     return orfs
 
@@ -195,25 +192,51 @@ def protein_analysis(protein):
             "Length": 0,
             "Molecular_Weight": 0.0,
             "Isoelectric_Point": 0.0,
+            "GRAVY": 0.0,
+            "Acidic_Percent": 0.0,
+            "Basic_Percent": 0.0,
+            "Hydrophobic_Percent": 0.0,
         }
 
     try:
         analysis = ProteinAnalysis(protein)
         molecular_weight = analysis.molecular_weight()
         isoelectric_point = analysis.isoelectric_point()
+        gravy = analysis.gravy()
+        counts = analysis.count_amino_acids()
+        length = len(protein)
+        acidic_percent = 100 * sum(counts.get(aa, 0) for aa in "DE") / length
+        basic_percent = 100 * sum(counts.get(aa, 0) for aa in "KRH") / length
+        hydrophobic_percent = 100 * sum(counts.get(aa, 0) for aa in "ACFILMVWY") / length
     except Exception:
         molecular_weight = 0.0
         isoelectric_point = 0.0
+        gravy = acidic_percent = basic_percent = hydrophobic_percent = 0.0
 
     return {
         "Length": len(protein),
         "Molecular_Weight": molecular_weight,
         "Isoelectric_Point": isoelectric_point,
+        "GRAVY": gravy,
+        "Acidic_Percent": acidic_percent,
+        "Basic_Percent": basic_percent,
+        "Hydrophobic_Percent": hydrophobic_percent,
     }
 
 
+def estimate_melting_temperature(sequence):
+    """Estimate dsDNA Tm for an unambiguous sequence up to 1 kb at 50 mM Na+."""
+    dna = clean_sequence(sequence).replace("U", "T")
+    if len(dna) < 8 or len(dna) > 1000 or set(dna) - set("ATGC"):
+        return None
+    try:
+        return float(MeltingTemp.Tm_NN(dna, Na=50))
+    except (ValueError, ZeroDivisionError):
+        return None
+
+
 def analyze_sequence(sequence):
-    sequence = clean_sequence(sequence)
+    sequence = clean_sequence(sequence).replace("U", "T")
     orfs = find_orfs(sequence, min_length=MIN_ORF_LENGTH)
 
     return {
@@ -223,6 +246,8 @@ def analyze_sequence(sequence):
         "Validation": validate_sequence(sequence),
         "Reverse_Complement": reverse_complement(sequence),
         "Six_Frame_Translation": six_frame_translation(sequence),
+        "Translation_Truncated": len(sequence) > MAX_TRANSLATION_NT,
+        "Melting_Temperature_C": estimate_melting_temperature(sequence),
         "ORFs": orfs,
         "ORF_Count": len(orfs),
     }
