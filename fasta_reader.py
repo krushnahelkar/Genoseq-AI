@@ -13,6 +13,7 @@ FASTA_FILE = Path(__file__).resolve().parent / "data" / "test.fasta"
 MIN_ORF_LENGTH = 90
 MAX_TRANSLATION_NT = 30000
 MAX_DNA_TM_NT = 10000
+IUPAC_DNA_BASES = set("ACGTRYSWKMBDHVN")
 
 
 def clean_sequence(sequence):
@@ -84,7 +85,7 @@ def nucleotide_classification(sequence):
 
 def validate_sequence(sequence):
     sequence = clean_sequence(sequence).replace("U", "T")
-    valid_bases = set("ATGCN")
+    valid_bases = IUPAC_DNA_BASES
     invalid_bases = sorted(set(sequence) - valid_bases)
 
     return {
@@ -226,13 +227,26 @@ def protein_analysis(protein):
 
 
 def estimate_melting_temperature(sequence):
-    """Estimate dsDNA Tm for an unambiguous sequence up to 10 kb at 50 mM Na+."""
+    """Estimate dsDNA Tm up to 10 kb at 50 mM Na+.
+
+    Use nearest-neighbor thermodynamics for unambiguous sequences. For valid
+    IUPAC ambiguity codes, use Biopython's empirical GC-content model, which
+    weights each ambiguous base by its possible GC fraction.
+    """
     dna = clean_sequence(sequence).replace("U", "T")
-    if len(dna) < 8 or len(dna) > MAX_DNA_TM_NT or set(dna) - set("ATGC"):
+    if len(dna) < 8 or len(dna) > MAX_DNA_TM_NT or set(dna) - IUPAC_DNA_BASES:
         return None
     try:
+        if set(dna) - set("ATGC"):
+            return float(MeltingTemp.Tm_GC(
+                dna,
+                check=False,
+                strict=False,
+                valueset=7,
+                Na=50,
+            ))
         return float(MeltingTemp.Tm_NN(dna, Na=50))
-    except (ValueError, ZeroDivisionError):
+    except (ValueError, ZeroDivisionError, KeyError):
         return None
 
 
