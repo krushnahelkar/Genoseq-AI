@@ -67,7 +67,8 @@ def result_as_pdf(result, charts):
                         f"theoretical pI {record['isoelectric_point']:.2f}; "
                         f"GRAVY {record['gravy']:.3f}; "
                         f"acidic/basic/hydrophobic {record['acidic_percent']:.2f}%/"
-                        f"{record['basic_percent']:.2f}%/{record['hydrophobic_percent']:.2f}%"
+                        f"{record['basic_percent']:.2f}%/{record['hydrophobic_percent']:.2f}%; "
+                        f"protein Tm {record.get('melting_temperature_note', 'not available')}"
                     )
                 else:
                     stats = record["stats"]

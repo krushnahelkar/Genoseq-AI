@@ -123,7 +123,7 @@ PAGE = """<!doctype html>
     .base-tile small { color:#8ea0b3; font-size:11px; }
     .bar-row { display:grid; grid-template-columns:105px minmax(60px,1fr) 110px; align-items:center; gap:12px; width:100%; min-height:42px; padding:5px 8px; border:1px solid transparent; border-radius:8px; background:transparent; color:#d5e0ea; text-align:left; }
     .bar-row:hover,.bar-row[aria-pressed=true] { background:#16263a; border-color:#2b4259; }
-    .bar-track { height:9px; overflow:hidden; border-radius:8px; background:#1d2b3c; }
+    .bar-track { display:block; width:100%; height:9px; overflow:hidden; border-radius:8px; background:#1d2b3c; }
     .bar-fill { display:block; height:100%; width:var(--bar-width); border-radius:8px; background:linear-gradient(90deg,#278f99,#60e0c1); }
     .bar-value { color:#b5c3d0; text-align:right; font:11px 'DM Mono',monospace; }
     .chart-detail,.chart-note { min-height:23px; color:#89a0b1; font-size:12px; }
@@ -139,7 +139,7 @@ PAGE = """<!doctype html>
     .aa-card[hidden] { display:none; }
     .aa-head { display:flex; justify-content:space-between; gap:6px; font-weight:700; }
     .aa-name { display:block; margin:3px 0 7px; color:#90a2b4; font-size:10px; }
-    .aa-card .bar-track { height:5px; }
+    .aa-card .bar-track { height:5px; margin-top:4px; }
     .class-hydrophobic .bar-fill { background:linear-gradient(90deg,#d59335,#ffd27a); }
     .class-acidic .bar-fill { background:linear-gradient(90deg,#d85d74,#ff98a5); }
     .class-basic .bar-fill { background:linear-gradient(90deg,#8a72ed,#c7a4ff); }
@@ -210,7 +210,9 @@ PAGE = """<!doctype html>
           <div class="metric"><span>Acidic residues (D + E)</span><strong>{{ item.acidic_percent|round(2) }}%</strong></div>
           <div class="metric"><span>Basic residues (K + R + H)</span><strong>{{ item.basic_percent|round(2) }}%</strong></div>
           <div class="metric"><span>Hydrophobic residues</span><strong>{{ item.hydrophobic_percent|round(2) }}%</strong></div>
+          <div class="metric"><span>Protein melting temperature (Tm)</span><strong>{% if item.melting_temperature_c is not none %}{{ item.melting_temperature_c|round(2) }} °C{% else %}Predictor unavailable{% endif %}</strong></div>
         </div>
+        {% if item.melting_temperature_c is none %}<p class="clinical-note">{{ item.melting_temperature_note }} Protein Tm is not the same measurement as DNA-primer Tm.</p>{% endif %}
         <div class="subsection">
           <div class="section-title"><h3>Amino-acid composition</h3><span class="small-label">Select a residue or filter by property</span></div>
           <div class="aa-filters" role="group" aria-label="Filter amino acids by property">
@@ -237,7 +239,7 @@ PAGE = """<!doctype html>
           <div class="metric"><span>GC content</span><strong>{{ item.stats.GC_percent|round(2) }}%</strong></div>
           <div class="metric"><span>AT content</span><strong>{{ item.stats.AT_percent|round(2) }}%</strong></div>
           <div class="metric"><span>Complete ORFs · all six frames</span><strong>{{ item.orf_count }}</strong></div>
-          <div class="metric"><span>Estimated DNA melting temperature</span><strong>{% if item.melting_temperature_c is not none %}{{ item.melting_temperature_c|round(2) }} °C{% else %}Not estimated{% endif %}</strong></div>
+          <div class="metric"><span>DNA melting temperature (Tm)</span><strong>{% if item.melting_temperature_c is not none %}{{ item.melting_temperature_c|round(2) }} °C{% else %}Not estimated{% endif %}</strong></div>
         </div>
         <div class="subsection">
           <div class="section-title"><h3>Nucleotide composition</h3><span class="small-label">Count and share of sequence</span></div>
@@ -258,7 +260,7 @@ PAGE = """<!doctype html>
             <p class="chart-detail" data-chart-detail>Choose a bar to inspect its count and percentage.</p>
           </div>
           <p class="muted"><strong>GC skew:</strong> {{ item.gc_skew|round(4) }} &nbsp; <strong>AT skew:</strong> {{ item.at_skew|round(4) }} &nbsp; <strong>Valid DNA/RNA:</strong> {{ "Yes" if item.valid else "No" }}{% if item.invalid_bases %} · Unexpected letters: {{ item.invalid_bases|join(", ") }}{% endif %}</p>
-          <p class="chart-note">RNA U bases are counted as T in the requested A/T/G/C/N summary. Tm is a nearest-neighbor estimate at 50 mM Na⁺; it is omitted for ambiguous or longer than 1 kb sequences.</p>
+          <p class="chart-note">RNA U bases are counted as T in the requested A/T/G/C/N summary. DNA Tm is a nearest-neighbor estimate at 50 mM Na⁺, shown for unambiguous sequences 8–1,000 bases long; other lengths or ambiguous bases are labeled “Not estimated”.</p>
         </div>
         <div class="subsection">
           <div class="section-title"><h3>DNA → protein translation</h3><span class="small-label">Three frames on each strand</span></div>

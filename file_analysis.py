@@ -135,6 +135,12 @@ def analyze_fasta(text):
             "basic_residues": basic_detail,
             "hydrophobic_residues": hydrophobic_detail,
             "amino_acid_detail": composition_detail,
+            "melting_temperature_c": None,
+            "melting_temperature_status": "not_available",
+            "melting_temperature_note": (
+                "Protein Tm needs a validated protein-specific predictor or an experimental measurement; "
+                "the DNA nearest-neighbor calculation does not apply to amino-acid sequences."
+            ),
             "amino_acid_composition": {
                 aa: round(count / len(protein_sequence) * 100, 2)
                 for aa, count in sorted(composition.items())
