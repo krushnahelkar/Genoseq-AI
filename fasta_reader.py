@@ -12,6 +12,7 @@ from Bio.SeqUtils.ProtParam import ProteinAnalysis
 FASTA_FILE = Path(__file__).resolve().parent / "data" / "test.fasta"
 MIN_ORF_LENGTH = 90
 MAX_TRANSLATION_NT = 30000
+MAX_DNA_TM_NT = 10000
 
 
 def clean_sequence(sequence):
@@ -225,9 +226,9 @@ def protein_analysis(protein):
 
 
 def estimate_melting_temperature(sequence):
-    """Estimate dsDNA Tm for an unambiguous sequence up to 1 kb at 50 mM Na+."""
+    """Estimate dsDNA Tm for an unambiguous sequence up to 10 kb at 50 mM Na+."""
     dna = clean_sequence(sequence).replace("U", "T")
-    if len(dna) < 8 or len(dna) > 1000 or set(dna) - set("ATGC"):
+    if len(dna) < 8 or len(dna) > MAX_DNA_TM_NT or set(dna) - set("ATGC"):
         return None
     try:
         return float(MeltingTemp.Tm_NN(dna, Na=50))

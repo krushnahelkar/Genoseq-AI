@@ -260,7 +260,7 @@ PAGE = """<!doctype html>
             <p class="chart-detail" data-chart-detail>Choose a bar to inspect its count and percentage.</p>
           </div>
           <p class="muted"><strong>GC skew:</strong> {{ item.gc_skew|round(4) }} &nbsp; <strong>AT skew:</strong> {{ item.at_skew|round(4) }} &nbsp; <strong>Valid DNA/RNA:</strong> {{ "Yes" if item.valid else "No" }}{% if item.invalid_bases %} · Unexpected letters: {{ item.invalid_bases|join(", ") }}{% endif %}</p>
-          <p class="chart-note">RNA U bases are counted as T in the requested A/T/G/C/N summary. DNA Tm is a nearest-neighbor estimate at 50 mM Na⁺, shown for unambiguous sequences 8–1,000 bases long; other lengths or ambiguous bases are labeled “Not estimated”.</p>
+          <p class="chart-note">RNA U bases are counted as T in the requested A/T/G/C/N summary. DNA Tm is a nearest-neighbor estimate at 50 mM Na⁺, shown for unambiguous sequences 8–10,000 bases long; other lengths or ambiguous bases are labeled “Not estimated”.</p>
         </div>
         <div class="subsection">
           <div class="section-title"><h3>DNA → protein translation</h3><span class="small-label">Three frames on each strand</span></div>
