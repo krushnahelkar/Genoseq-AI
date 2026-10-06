@@ -165,7 +165,7 @@ PAGE = """<!doctype html>
     </div>
     <div class="hero">
       <div class="eyebrow"><span class="status-dot"></span>GENOMIC ANALYSIS WORKSPACE</div>
-      <h1>GenoSeq AI</h1>
+      <h1>IndiGen</h1>
       <p class="intro subhead">Intelligent Genomic Sequence Analysis and Disease Prediction</p>
       <p class="intro" style="margin-top:8px">Explore sequence quality, composition, translation, and variant summaries in one workspace.</p>
       <div class="clinical-note">Disease prediction is not active in this prototype. A labeled training set and validated model are required before it can report disease predictions.</div>
