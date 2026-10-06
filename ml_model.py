@@ -1,4 +1,4 @@
-"""Numeric feature extraction for future Genoseq AI model training.
+"""Numeric feature extraction for future IndiGen model training.
 
 This module does not make predictions. A trained model and labeled data are
 required before any class or risk score can be reported.

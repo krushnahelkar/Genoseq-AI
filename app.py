@@ -14,7 +14,7 @@ PAGE = """<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GenoSeq AI | Genomic Sequence Analysis</title>
+  <title>IndiGen | Genomic Sequence Analysis</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
     :root { color-scheme: light; --ink:#142b2a; --muted:#70817d; --green:#087f70; --green-dark:#06695d; --blue:#3f69e8; --line:#e2eae6; --wash:#f5f8f6; --mint:#e8f5ef; --shadow:0 14px 40px #163b2b0b; }
@@ -159,7 +159,7 @@ PAGE = """<!doctype html>
 <main>
   <header>
     <div class="topbar">
-      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3c0 6 10 6 10 12s-10 3-10 6M17 3c0 6-10 6-10 12s10 3 10 6M8 7h8M7 12h10M8 17h8"/></svg></span>GenoSeq AI</div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3c0 6 10 6 10 12s-10 3-10 6M17 3c0 6-10 6-10 12s10 3 10 6M8 7h8M7 12h10M8 17h8"/></svg></span>IndiGen</div>
       <nav class="dashboard-nav" aria-label="Workspace navigation"><span>Workspace</span><span>Analysis</span><span>Documentation</span></nav>
       <div class="nav-status"><span class="status-dot"></span>Analysis workspace</div>
     </div>
@@ -380,7 +380,7 @@ PAGE = """<!doctype html>
     {% endfor %}
   </section>
   {% endif %}
-  <footer>Genoseq AI is a learning prototype. Results are descriptive and are not a diagnosis or clinical interpretation. Uploaded files are processed in memory and are not saved by this page.</footer>
+  <footer>IndiGen is a learning prototype. Results are descriptive and are not a diagnosis or clinical interpretation. Uploaded files are processed in memory and are not saved by this page.</footer>
 </main>
 <script>
   (() => {
@@ -506,13 +506,13 @@ def index():
                     return Response(
                         result_as_csv(result),
                         mimetype="text/csv",
-                        headers={"Content-Disposition": "attachment; filename=genoseq_ai_report.csv"},
+                        headers={"Content-Disposition": "attachment; filename=indigen_report.csv"},
                     )
                 if action == "json":
                     return Response(
                         result_as_json(result),
                         mimetype="application/json",
-                        headers={"Content-Disposition": "attachment; filename=genoseq_ai_report.json"},
+                        headers={"Content-Disposition": "attachment; filename=indigen_report.json"},
                     )
                 if action in {"pdf", "charts"} or action == "analyze":
                     charts = build_charts(result)
@@ -520,13 +520,13 @@ def index():
                         return Response(
                             result_as_pdf(result, charts),
                             mimetype="application/pdf",
-                            headers={"Content-Disposition": "attachment; filename=genoseq_ai_report.pdf"},
+                            headers={"Content-Disposition": "attachment; filename=indigen_report.pdf"},
                         )
                     if action == "charts":
                         return Response(
                             charts_as_zip(charts),
                             mimetype="application/zip",
-                            headers={"Content-Disposition": "attachment; filename=genoseq_ai_charts.zip"},
+                            headers={"Content-Disposition": "attachment; filename=indigen_charts.zip"},
                         )
                     chart_previews = [
                         {"title": name.replace("_", " ").title(),
@@ -537,13 +537,13 @@ def index():
                 error = str(exc)
             except OSError as exc:
                 app.logger.exception("Could not read uploaded file %s", uploaded_file.filename)
-                error = "Genoseq AI could not read this upload. Please choose the file again and retry."
+                error = "IndiGen could not read this upload. Please choose the file again and retry."
             except Exception as exc:
                 app.logger.exception("Unexpected error while analyzing uploaded file %s", uploaded_file.filename)
                 result = None
                 chart_previews = []
                 error = (
-                    "Genoseq AI could not finish analyzing this file. "
+                    "IndiGen could not finish analyzing this file. "
                     "Check that it is a valid FASTA, FASTQ, or VCF file and try again. "
                     "If the problem continues, check the server terminal for details."
                 )
@@ -564,20 +564,20 @@ def api_analyze():
     except Exception as exc:
         app.logger.exception("Unexpected error in /api/analyze for %s", uploaded_file.filename)
         return jsonify({
-            "error": "Genoseq AI could not analyze this file. Check the file format and try again."
+            "error": "IndiGen could not analyze this file. Check the file format and try again."
         }), 500
 
 
 @app.errorhandler(500)
 def internal_server_error(_error):
-    app.logger.exception("Unhandled Genoseq AI server error")
+    app.logger.exception("Unhandled IndiGen server error")
     if request.path == "/api/analyze":
         return jsonify({
-            "error": "Genoseq AI hit an unexpected server error. Please retry with a valid file."
+            "error": "IndiGen hit an unexpected server error. Please retry with a valid file."
         }), 500
     return render_template_string(
         PAGE,
-        error="Genoseq AI hit an unexpected server error. The traceback was written to the server terminal.",
+        error="IndiGen hit an unexpected server error. The traceback was written to the server terminal.",
         result=None,
         chart_previews=[],
     ), 500

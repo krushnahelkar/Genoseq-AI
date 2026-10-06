@@ -1,4 +1,4 @@
-"""End-to-end Genoseq AI processing pipeline used by the web application."""
+"""End-to-end IndiGen processing pipeline used by the web application."""
 from file_analysis import analyze_upload
 from ml_model import extract_features, model_readiness
 

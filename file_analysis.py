@@ -1,4 +1,4 @@
-"""File detection and first-pass analysis for Genoseq AI uploads."""
+"""File detection and first-pass analysis for IndiGen uploads."""
 from collections import Counter
 from io import StringIO
 from pathlib import Path

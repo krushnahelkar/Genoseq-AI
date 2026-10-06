@@ -273,7 +273,7 @@ def print_analysis(record):
     stats = result["Statistics"]
 
     print("\n" + "=" * 52)
-    print("Genoseq AI Sequence Analysis")
+    print("IndiGen Sequence Analysis")
     print("=" * 52)
     print("Record ID:", record.id)
     print("Description:", record.description)
@@ -301,7 +301,7 @@ def print_analysis(record):
 
 def save_csv_report(records):
     """Save one summary row per FASTA record beside this script."""
-    report_path = Path(__file__).resolve().parent / "genoseq_ai_report.csv"
+    report_path = Path(__file__).resolve().parent / "indigen_report.csv"
     fieldnames = [
         "Record_ID", "Description", "Length", "A_count", "T_count",
         "G_count", "C_count", "N_count", "GC_percent", "AT_percent",

@@ -1,4 +1,4 @@
-# Genoseq AI project status
+# IndiGen project status
 
 ## Workflow implemented
 1. File detection and parsing for text FASTA, FASTQ, and VCF uploads.

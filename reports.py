@@ -1,4 +1,4 @@
-"""CSV and JSON serialization for Genoseq AI pipeline results."""
+"""CSV and JSON serialization for IndiGen pipeline results."""
 import csv
 import json
 import zipfile
@@ -54,7 +54,7 @@ def result_as_pdf(result, charts):
         figure, axis = plt.subplots(figsize=(8.27, 11.69))
         axis.axis("off")
         lines = [
-            "Genoseq AI Analysis Report", "", f"File: {result.get('filename', '')}",
+            "IndiGen Analysis Report", "", f"File: {result.get('filename', '')}",
             f"Input type: {result.get('kind', '').upper()}", "", "Summary",
         ]
         if result["kind"] == "fasta":

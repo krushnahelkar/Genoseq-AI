@@ -1,6 +1,6 @@
-# GenoSeq AI
+# IndiGen
 
-GenoSeq AI is a Flask web app for first-pass FASTA, FASTQ, and VCF summaries. It is a learning prototype, not a clinical diagnosis or pathogenicity classifier.
+IndiGen is a Flask web app for first-pass FASTA, FASTQ, and VCF summaries. It is a learning prototype, not a clinical diagnosis or pathogenicity classifier.
 
 ## Run locally
 
